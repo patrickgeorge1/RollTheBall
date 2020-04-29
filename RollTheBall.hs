@@ -6,6 +6,8 @@ module RollTheBall where
 import Pipes
 import ProblemState
 import Data.Array as A
+import Data.List
+
 
 
 {-
@@ -72,7 +74,27 @@ instance Show Level
     Intoarce un obiect de tip Level în care tabla este populată
     cu EmptySpace. Implicit, colțul din stânga sus este (0,0)
 -}
-arrt = A.array ((0, 0), (1, 1)) [((0, 0), (Cell 'z')), ((0, 1), (Cell startDown)), ((1, 0), (Cell 'd')), ((1, 1), (Cell 'r'))]
+arrt = A.array ((0, 0), (2, 2)) [
+    ((0, 0), (Cell startDown)), ((0, 1), (Cell emptySpace)), ((0, 2), (Cell emptySpace)),
+    ((1, 0), (Cell verPipe)), ((1, 1), (Cell emptySpace)), ((1, 2), (Cell emptySpace)),
+    ((2, 0), (Cell winUp)), ((2, 1), (Cell emptySpace)), ((2, 2), (Cell emptySpace))]
+rar =  A.array ((0, 0), (1, 1)) [((0,0), (Cell emptySpace)), ((0,1), (Cell emptySpace)), ((1, 0), (Cell startUp)), ((1,1), (Cell emptySpace))]
+arr4sol = A.array ((0, 0), (3, 3)) [
+        ((0, 0), (Cell startDown)), ((0, 1), (Cell emptyCell)), ((0, 2), (Cell emptyCell)), ((0, 3), (Cell emptyCell)), 
+        ((1, 0), (Cell verPipe)), ((1, 1), (Cell emptyCell)), ((1, 2), (Cell emptyCell)), ((1, 3), (Cell emptyCell)), 
+        ((2, 0), (Cell verPipe)), ((2, 1), (Cell emptySpace)), ((2, 2), (Cell emptyCell)), ((2, 3), (Cell emptyCell)), 
+        ((3, 0), (Cell botLeft)), ((3, 1), (Cell horPipe)), ((3, 2), (Cell horPipe)), ((3, 3), (Cell winLeft))]
+
+arr4 = A.array ((0, 0), (3, 3)) [
+        ((0, 0), (Cell startDown)), ((0, 1), (Cell emptyCell)), ((0, 2), (Cell emptyCell)), ((0, 3), (Cell emptyCell)), 
+        ((1, 0), (Cell verPipe)), ((1, 1), (Cell emptyCell)), ((1, 2), (Cell emptyCell)), ((1, 3), (Cell emptyCell)), 
+        ((2, 0), (Cell verPipe)), ((2, 1), (Cell horPipe)), ((2, 2), (Cell emptyCell)), ((2, 3), (Cell emptyCell)), 
+        ((3, 0), (Cell botLeft)), ((3, 1), (Cell emptySpace)), ((3, 2), (Cell horPipe)), ((3, 3), (Cell winLeft))]
+
+lv2 = Level rar
+lv3 = Level arrt
+lv4sol = Level arr4sol
+lv4 = Level arr4
 
 emptyLevel :: Position -> Level
 emptyLevel (l, r) = Level $ A.array ((0, 0), (l, r)) [((x, y), (Cell emptySpace)) | x <- [0..l], y <- [0..r]]
@@ -180,16 +202,16 @@ moveCell pos@(l, c) d level =   if (all_positions_are_correct && next_cell_is_em
 -}
 
 connectToRight :: [Char]
-connectToRight = [horPipe, botRight, topRight, winLeft]
+connectToRight = [horPipe, botRight, topRight, winLeft, startLeft]
 
 connectToLeft :: [Char]
-connectToLeft = [horPipe, topLeft, botLeft, winRight]
+connectToLeft = [horPipe, topLeft, botLeft, winRight, startRight]
 
 connectToUp :: [Char]
-connectToUp = [verPipe, topRight, topLeft, winUp]
+connectToUp = [verPipe, topRight, topLeft, winDown, startDown]
 
 connectToDown :: [Char]
-connectToDown = [verPipe, botRight, botLeft, winDown]
+connectToDown = [verPipe, botRight, botLeft, winUp, startUp]
 
 
 
@@ -223,14 +245,96 @@ connection cell1@(Cell cg1) cell2@(Cell cg2) dir =  (inArray arrayToConnect cg2)
     Este folosită în cadrul Interactive.
 -}
 
-getStartPossition :: Level -> [Char]
-getStartPossition lv@(Level arr)  =   elements
+justExtractInt (Just c) = c
+ 
+getStartPossition :: Level -> Position
+getStartPossition lv@(Level arr)  =     (toInteger line, toInteger  col)
                                         where
                                         elements_as_cells = A.elems arr
                                         elements = map category elements_as_cells
+                                        just_index = head $ filter (/= Nothing) [ elemIndex startType elements | startType <- startCells ]
+                                        index  = justExtractInt just_index
+                                        dimm = snd (A.bounds arr)
+                                        width = snd (snd (A.bounds arr)) + 1
+                                        line = index `div` (fromInteger width)
+                                        col  = index `mod` (fromInteger width) 
+
+
+help :: Level -> Integer
+help lv@(Level arr)  =  width
+                            where
+                            elements_as_cells = A.elems arr
+                            elements = map category elements_as_cells
+                            just_index = head $ filter (/= Nothing) [ elemIndex startType elements | startType <- startCells ]
+                            index  = justExtractInt just_index
+                            dimm = snd (A.bounds arr)
+                            width = snd (snd (A.bounds arr)) + 1
+                            line = index `div` (fromInteger width)
+                            col  = index `mod` (fromInteger width) 
+
+
+getNextPossibleWays :: Level -> Position -> [(Position, Directions)]
+getNextPossibleWays lv@(Level arr) pos@(l, c) 
+                                            | cell_category == horPipe = [((l, c - 1), West), ((l, c + 1), East)]
+                                            | cell_category == verPipe = [((l + 1, c), South), ((l - 1, c), North)]
+                                            | cell_category == topLeft = [((l + 1, c), South), ((l, c + 1), East)]
+                                            | cell_category == botLeft = [((l - 1, c), North), ((l, c + 1), East)]
+                                            | cell_category == botRight = [((l - 1, c), North), ((l, c - 1), West)]
+                                            | cell_category == topRight = [((l + 1, c), South), ((l, c - 1), West)]
+                                            | cell_category == startUp = [((l - 1, c), North)]
+                                            | cell_category == startDown = [((l + 1, c), South)]
+                                            | cell_category == startLeft = [((l, c - 1), West)]
+                                            | cell_category == startRight = [((l, c + 1), East)]
+                                            | otherwise = [((-1, -1), North)]
+                                            where
+                                            cell = arr A.! pos
+                                            cell_category = category cell
+
+
+-- notEmptySpace :: Position -> Level -> Bool
+-- notEmptySpace pos@(l, c) = cat /= emptySpace
+--                                         where
+--                                         cell_elem = arr A.! pos
+--                                         cat == category cell_elem
+
+compareWithInitialPos :: Level -> (Position, Directions) -> Bool
+compareWithInitialPos lv@(Level arr) ((ll, rr), dd) =   cat /= emptySpace
+                                                        where
+                                                        cell_elem = arr A.! (ll, rr)
+                                                        cat = category cell_elem
+
+
+
+getNextToCheck :: Level -> Position -> (Position, Directions)
+getNextToCheck lv@(Level arr) pos@(l, c) =  if status
+                                            then ((next_line, next_column), next_direction)
+                                            else ((-1, -1), North)
+                                            where
+                                            dimm = snd (A.bounds arr)
+                                            width = snd (snd (A.bounds arr))
+                                            height = fst (snd (A.bounds arr))
+                                            next_data = getNextPossibleWays lv pos
+                                            parsed_next_data = filter (compareWithInitialPos lv) next_data
+                                            ((next_line, next_column), next_direction) = if parsed_next_data == [] then ((-1, -1), North) else head parsed_next_data
+                                            status = (next_line >= 0) && (next_line <= height) && (next_column >= 0) && (next_column <= width)
+
+wonLevelHelper :: Level -> Position -> Bool -> Bool
+wonLevelHelper lv@(Level arr) start@(l, c) status = if is_recursion_finished then True
+                                                    else if (is_valid_next && is_connected_with_next) then wonLevelHelper next_level (next_line, next_column) status
+                                                    else False 
+                                                    where
+                                                    ((next_line, next_column), next_direction) = getNextToCheck lv start
+                                                    is_valid_next = (next_line >= 0) && (next_column >= 0)
+                                                    this_cell =  arr A.! start
+                                                    next_cell =  arr A.! (next_line, next_column)
+                                                    is_connected_with_next = connection this_cell next_cell next_direction
+                                                    next_level = addCell (emptySpace, start) lv
+                                                    is_recursion_finished = (inArray winningCells (category this_cell))
 
 wonLevel :: Level -> Bool
-wonLevel = undefined
+wonLevel lv@(Level arr) =   wonLevelHelper lv (l, c) True
+                            where
+                            (l, c) = getStartPossition lv
 
 instance ProblemState Level (Position, Directions) where
     successors = undefined
