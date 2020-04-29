@@ -72,7 +72,7 @@ instance Show Level
     Intoarce un obiect de tip Level în care tabla este populată
     cu EmptySpace. Implicit, colțul din stânga sus este (0,0)
 -}
-arrt = A.array ((0, 0), (1, 1)) [((0, 0), (Cell 'z')), ((0, 1), (Cell emptyCell)), ((1, 0), (Cell 'd')), ((1, 1), (Cell 'r'))]
+arrt = A.array ((0, 0), (1, 1)) [((0, 0), (Cell 'z')), ((0, 1), (Cell startDown)), ((1, 0), (Cell 'd')), ((1, 1), (Cell 'r'))]
 
 emptyLevel :: Position -> Level
 emptyLevel (l, r) = Level $ A.array ((0, 0), (l, r)) [((x, y), (Cell emptySpace)) | x <- [0..l], y <- [0..r]]
@@ -178,8 +178,41 @@ moveCell pos@(l, c) d level =   if (all_positions_are_correct && next_cell_is_em
     ex: connection botLeft horPipe East = True (╚═)
         connection horPipe botLeft East = False (═╚)
 -}
+
+connectToRight :: [Char]
+connectToRight = [horPipe, botRight, topRight, winLeft]
+
+connectToLeft :: [Char]
+connectToLeft = [horPipe, topLeft, botLeft, winRight]
+
+connectToUp :: [Char]
+connectToUp = [verPipe, topRight, topLeft, winUp]
+
+connectToDown :: [Char]
+connectToDown = [verPipe, botRight, botLeft, winDown]
+
+
+
+getConnectionType :: Directions -> [Char]
+getConnectionType d
+                    | d == North = connectToUp
+                    | d == South = connectToDown
+                    | d == East  = connectToRight
+                    | otherwise = connectToLeft
+
+getOpositeDirection :: Directions -> Directions
+getOpositeDirection d 
+                    | d == East = West
+                    | d == West = East
+                    | d == North = South
+                    | otherwise = North
+
 connection :: Cell -> Cell -> Directions -> Bool
-connection = undefined
+connection cell1@(Cell cg1) cell2@(Cell cg2) dir =  (inArray arrayToConnect cg2) && (inArray arrayToConnectOpposite cg1)
+                                                    where
+                                                    arrayToConnect = getConnectionType dir
+                                                    opDir = getOpositeDirection dir
+                                                    arrayToConnectOpposite = getConnectionType opDir
 
 {-
     *** TODO ***
@@ -189,6 +222,13 @@ connection = undefined
     de tip inițial la cea de tip final.
     Este folosită în cadrul Interactive.
 -}
+
+getStartPossition :: Level -> [Char]
+getStartPossition lv@(Level arr)  =   elements
+                                        where
+                                        elements_as_cells = A.elems arr
+                                        elements = map category elements_as_cells
+
 wonLevel :: Level -> Bool
 wonLevel = undefined
 

@@ -21,3 +21,6 @@ instance Show Level
     where show (Level arr) = show width
                              where
                              width = (A.bounds arr)
+
+
+data D  = DC1 Int | DC2 Int Int deriving (Show)
