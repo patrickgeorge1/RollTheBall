@@ -5,8 +5,10 @@
 module RollTheBall where
 import Pipes
 import ProblemState
-import Data.Array as A
 import Data.List
+
+import qualified Data.Array as A 
+
 
 
 
@@ -336,7 +338,59 @@ wonLevel lv@(Level arr) =   wonLevelHelper lv (l, c) True
                             where
                             (l, c) = getStartPossition lv
 
+arrTest = A.array ((0,0), (1, 1)) [((0, 0), 0), ((0, 1), 1), ((1, 0), 2), ((1, 1), 3)]
+arrE = A.assocs (cells lv4)
+arrC = map (category . snd) arrE
+
+
+
+isInLimits::Level -> (Position, Directions) -> Bool
+isInLimits lv@(Level arr) ((next_line, next_column), next_direction) = (next_line >= 0) && (next_line <= height) && (next_column >= 0) && (next_column <= width)
+                                                    where
+                                                    dimm = snd (A.bounds arr)
+                                                    width = snd (snd (A.bounds arr))
+                                                    height = fst (snd (A.bounds arr))
+
+isElementFromPositionEqualToEmptySpace :: Level -> (Position, Directions) -> Bool
+isElementFromPositionEqualToEmptySpace lv@(Level arr) ((l, r), d) = (cg == emptySpace)
+                                                                    where
+                                                                    cell = arr A.! (l, r)
+                                                                    cg = category cell
+positionCellToActions :: Level -> (Position, Cell) -> [(Position, Directions)]
+positionCellToActions lv@(Level arr) ((l, r), cel@(Cell category)) = validEmptySpace
+                                                    where
+                                                    possibleDirections = [((l + 1, r), South), ((l - 1, r), North), ((l, r + 1), East), ((l, r - 1), West)]
+                                                    validDirections = filter (isInLimits lv) possibleDirections
+                                                    validEmptySpace = filter (isElementFromPositionEqualToEmptySpace lv) validDirections
+
+
+reversePosition :: (Position, Directions) -> (Position, Directions)
+reversePosition ((l, r), d) 
+                            | d == South = ((l - 1, r), d)
+                            | d == North = ((l + 1, r), d)
+                            | d == East  = ((l, r - 1), d)
+                            | otherwise  = ((l, r + 1), d)
+
+
+problemNode :: Level -> (Position, Directions) -> ((Position, Directions), Level)
+problemNode lv@(Level arr) ((l, r), d) = (((l, r), d), (moveCell (l, r) d lv))
+
+arr_lev = A.assocs (cells lv4)
+all_actions = map (problemNode lv4) $ map reversePosition $ concat $ filter (/= []) (map (positionCellToActions lv4) arr_lev) 
+
+
+
+
 instance ProblemState Level (Position, Directions) where
-    successors = undefined
+    successors :: Level -> [((Position, Directions), Level)]
+    successors lv@(Level arr) = all_actions
+                                where
+                                level_to_list = A.assocs arr   :: [(Position, Cell)]
+                                all_actions = map (problemNode lv) $ map reversePosition $ concat $ filter (/= []) (map (positionCellToActions lv) level_to_list)
+                                
+
+
+
+
     isGoal = undefined
     reverseAction = undefined
