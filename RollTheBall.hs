@@ -93,10 +93,24 @@ arr4 = A.array ((0, 0), (3, 3)) [
         ((2, 0), (Cell verPipe)), ((2, 1), (Cell horPipe)), ((2, 2), (Cell emptyCell)), ((2, 3), (Cell emptyCell)), 
         ((3, 0), (Cell botLeft)), ((3, 1), (Cell emptySpace)), ((3, 2), (Cell horPipe)), ((3, 3), (Cell winLeft))]
 
+arr5 = A.array ((0, 0), (3, 3)) [
+        ((0, 0), (Cell startDown)), ((0, 1), (Cell emptyCell)), ((0, 2), (Cell emptyCell)), ((0, 3), (Cell emptyCell)),
+        ((1, 0), (Cell emptySpace)), ((1, 1), (Cell verPipe)), ((1, 2), (Cell emptySpace)), ((1, 3), (Cell emptyCell)),
+        ((2, 0), (Cell verPipe)), ((2, 1), (Cell emptyCell)), ((2, 2), (Cell horPipe)), ((2, 3), (Cell emptySpace)), 
+        ((3, 0), (Cell botLeft)), ((3, 1), (Cell emptySpace)), ((3, 2), (Cell horPipe)), ((3, 3), (Cell winLeft))]
+arr6 = A.array ((0, 0), (3, 3)) [
+        ((0, 0), (Cell startDown)), ((0, 1), (Cell emptyCell)), ((0, 2), (Cell emptyCell)), ((0, 3), (Cell emptyCell)),
+        ((1, 0), (Cell verPipe)), ((1, 1), (Cell emptyCell)), ((1, 2), (Cell emptyCell)), ((1, 3), (Cell winDown)),
+        ((2, 0), (Cell botLeft)), ((2, 1), (Cell horPipe)), ((2, 2), (Cell botRight)), ((2, 3), (Cell emptyCell)), 
+        ((3, 0), (Cell emptySpace)), ((3, 1), (Cell emptySpace)), ((3, 2), (Cell emptySpace)), ((3, 3), (Cell horPipe))]
+
+
 lv2 = Level rar
 lv3 = Level arrt
 lv4sol = Level arr4sol
 lv4 = Level arr4
+lv5 = Level arr5
+lv6 = Level arr6
 
 emptyLevel :: Position -> Level
 emptyLevel (l, r) = Level $ A.array ((0, 0), (l, r)) [((x, y), (Cell emptySpace)) | x <- [0..l], y <- [0..r]]
@@ -372,6 +386,13 @@ reversePosition ((l, r), d)
                             | otherwise  = ((l, r + 1), d)
 
 
+forFilteringStartAndWin :: Level -> ((Position, Directions), Level) -> Bool
+forFilteringStartAndWin lv@(Level arr) (((l, r), d), lll) = (notInArray winningCells cg) && (notInArray startCells cg) && (cg /= emptySpace)
+                                                            where
+                                                            cel = arr A.! (l, r)
+                                                            cg = category cel
+
+
 problemNode :: Level -> (Position, Directions) -> ((Position, Directions), Level)
 problemNode lv@(Level arr) ((l, r), d) = (((l, r), d), (moveCell (l, r) d lv))
 
@@ -386,7 +407,7 @@ instance ProblemState Level (Position, Directions) where
     successors lv@(Level arr) = all_actions
                                 where
                                 level_to_list = A.assocs arr   :: [(Position, Cell)]
-                                all_actions = map (problemNode lv) $ map reversePosition $ concat $ filter (/= []) (map (positionCellToActions lv) level_to_list)
+                                all_actions = filter (forFilteringStartAndWin lv) $ map (problemNode lv) $ map reversePosition $ concat $ filter (/= []) (map (positionCellToActions lv) level_to_list)
                                 
 
 
