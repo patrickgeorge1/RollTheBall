@@ -307,11 +307,6 @@ getNextPossibleWays lv@(Level arr) pos@(l, c)
                                             cell_category = category cell
 
 
--- notEmptySpace :: Position -> Level -> Bool
--- notEmptySpace pos@(l, c) = cat /= emptySpace
---                                         where
---                                         cell_elem = arr A.! pos
---                                         cat == category cell_elem
 
 compareWithInitialPos :: Level -> (Position, Directions) -> Bool
 compareWithInitialPos lv@(Level arr) ((ll, rr), dd) =   cat /= emptySpace
@@ -358,6 +353,7 @@ arrC = map (category . snd) arrE
 
 
 
+
 isInLimits::Level -> (Position, Directions) -> Bool
 isInLimits lv@(Level arr) ((next_line, next_column), next_direction) = (next_line >= 0) && (next_line <= height) && (next_column >= 0) && (next_column <= width)
                                                     where
@@ -400,7 +396,15 @@ arr_lev = A.assocs (cells lv4)
 all_actions = map (problemNode lv4) $ map reversePosition $ concat $ filter (/= []) (map (positionCellToActions lv4) arr_lev) 
 
 
+getReversedAction :: (Position, Directions) -> (Position, Directions)
+getReversedAction ((l, c), dir)
+                                | dir == North = ((l - 1, c), South)
+                                | dir == South = ((l + 1, c), North)
+                                | dir == East  = ((l, c + 1), West)
+                                | otherwise    = ((l, c - 1), East)
 
+-- ((isGoal) .  snd) ((((0, 0), North), lv3): (successors lv3))
+-- getOpositeDirection d
 
 instance ProblemState Level (Position, Directions) where
     successors :: Level -> [((Position, Directions), Level)]
@@ -412,6 +416,12 @@ instance ProblemState Level (Position, Directions) where
 
 
 
+    isGoal::Level -> Bool
+    isGoal lv@(Level arr) = wonLevel lv
 
-    isGoal = undefined
-    reverseAction = undefined
+    reverseAction :: ((Position, Directions), Level) -> ((Position, Directions), Level)
+    reverseAction ((pos, dir) , lv) = ((new_pos, new_dir), actionMade) 
+                                    where
+                                    (new_pos, new_dir) = getReversedAction (pos, dir)
+                                    actionMade = moveCell pos dir lv
+
