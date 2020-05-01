@@ -38,3 +38,6 @@ class ProblemState s a | s -> a where
 
     reverseAction :: (a, s) -> (a, s)
 
+    getSameAction :: a -> a
+    getSameLevel  :: s -> s
+

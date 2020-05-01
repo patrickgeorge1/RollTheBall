@@ -419,3 +419,8 @@ instance ProblemState Level (Position, Directions) where
                                     (new_pos, new_dir) = getReversedAction (pos, dir)
                                     actionMade = moveCell pos dir lv
 
+    getSameAction :: (Position, Directions) -> (Position, Directions)
+    getSameAction ac = ac
+
+    getSameLevel :: Level -> Level
+    getSameLevel lv = lv

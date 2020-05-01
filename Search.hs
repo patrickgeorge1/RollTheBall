@@ -58,24 +58,37 @@ nodeChildren node = getChildren node
 -- levelToString :: s -> String
 -- levelToString node = map category $ A.elems (cells (getState node))
 
-createNode :: (ProblemState s a, Eq s) => Node s a -> Node s a
-createNode node@(Node state action parent depth c)  = new_node
-                    where
-                    pos_dir_levels = ProblemState.successors state
-                    new_node = Node state action parent depth childrens
-                    childrens = [(Node lev (Just pd) (Just new_node) (depth + 1) [])  | (pd, lev) <- pos_dir_levels]
+-- createNode :: (ProblemState s a, Eq s) => Node s a -> s ->Node s a
+-- createNode node@(Node state action parent depth c)   = new_node
+--                     where
+--                     pos_dir_levels = ProblemState.successors state
+--                     childrens = [(Node lev (Just pd) (Just new_node) (depth + 1) [])  | (pd, lev) <- pos_dir_levels]
+--                     new_node = Node state action parent depth childrens
 
 
+-- createNode :: (ProblemState s a, Eq s)  => Node s a -> a -> s ->Node s a
+-- createNode parinte@(Node state actionn parent depth c) action lv  = Node lv (Just action) parent 0 childrenRec
+--                                                         where 
+--                                                         succs_pos_dir_levels = ProblemState.successors state
+--                                                         childrenRec = [(createNode (createNode parinte action lv) pd lev) | (pd, lev) <- succs_pos_dir_levels]
 
--- lv22 =   A.elems (cells lv2)
--- sett =  S.insert [lv22] (S.fromList [lv22])
 
-createStateSpace :: (ProblemState s a, Eq s) => s -> Node s a
-createStateSpace lv = createNode startNode
+createNode ::  (ProblemState s a, Eq s)  => Node s a -> s ->Node s a
+createNode parinte@(Node state actionn parent depth c) lv = Node lv Nothing (Just parinte) 0 childRec
+                                                            where
+                                                            succs_pos_dir_levels = ProblemState.successors state
+                                                            this_node = createNode parinte lv
+                                                            childRec = [(Node ll (Just pd)) (Just this_node) 0 (map (createNode (createNode this_node ll)) (map snd (ProblemState.successors ll))) | (pd, ll) <- succs_pos_dir_levels]
+
+createStateSpace :: (ProblemState s a, Eq s)  => s -> Node s a
+createStateSpace lv =   createNode startNode  lv
                         where
                         startNode = Node lv Nothing Nothing 0 []
-                        -- fake_node = Node lv Nothing 0 0 []
-                        -- set = S.fromList (levelToString fake_node)
+                        -- dummyAc = ProblemState.getSameAction 
+                        -- dummyLv = ProblemState.getSameAction lv
+              
+
+              
 
 {-
     *** TODO ***
