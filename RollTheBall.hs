@@ -47,28 +47,21 @@ data Level = Level {
     În cazul acesta, eliminați deriving (Eq, Ord) din Level.
 -}
 
-{-
-    *** TODO ***
-
-    Instanțiati Level pe Show. 
-    Atenție! Fiecare linie este urmată de \n (endl in Pipes).
--}
-convertToString :: [Cell] -> Integer -> Integer -> String
-convertToString elem@(h:t) m c
-                    | t == [] =  [(category h)] ++ ['\n']
-                    | elem == [] = ['\n']
-                    | c == m = (category h) : '\n' : (convertToString t m 0)
-                    | otherwise = (category h):(convertToString t m (c + 1))
 
 
+concatenateCellToOutput text (pos, (Cell cg)) 
+                                                | r == 0    = text ++ [endl] ++ [cg]
+                                                | otherwise = text ++ [cg]
+                                                where
+                                                l = fst pos
+                                                r = snd pos
 
 instance Show Level 
-    where show (Level arr) = '\n' : (convertToString elements width 0)
-                             where
-                             dimm = snd (A.bounds arr)
-                             width = snd (snd (A.bounds arr))
-                             height = fst (snd (A.bounds arr))
-                             elements = A.elems arr :: [Cell]
+    where show (Level arr) = foldl concatenateCellToOutput [] cellss ++ [endl]
+                            where
+                            cellss = A.assocs arr
+
+
 
 {-
     *** TODO ***
@@ -405,6 +398,7 @@ getReversedAction ((l, c), dir)
 
 -- ((isGoal) .  snd) ((((0, 0), North), lv3): (successors lv3))
 -- getOpositeDirection d
+
 
 instance ProblemState Level (Position, Directions) where
     successors :: Level -> [((Position, Directions), Level)]
