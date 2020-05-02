@@ -115,7 +115,7 @@ bfsHelper recentlyAdded frontier last_result visited =  if (length frontier) == 
                                                         visited_valid_children = S.fromList (map getState valid_children)
                                                         new_recentlyAdded = valid_children
                                                         new_frontier = (tail frontier) ++ new_recentlyAdded
-                                                        new_visited = S.union visited visited_valid_children
+                                                        new_visited =  S.insert (getState node) (S.union visited visited_valid_children)
                                                         
                                                         
 

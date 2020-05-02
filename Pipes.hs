@@ -9,8 +9,6 @@ module Pipes where
     pentru afisarea celulelor nivelului.
 --}
 
-
-
 horPipe :: Char
 horPipe = '═'
 
@@ -67,5 +65,3 @@ startCells = [startUp, startDown, startLeft, startRight]
 
 winningCells :: [Char]
 winningCells = [winUp, winDown, winLeft, winRight]
-
-
