@@ -99,10 +99,30 @@ createStateSpace lv =   createNode startNode  lv
 
 -}
 
+
+
+notMemberInSet :: (Ord s) => S.Set s -> s -> Bool
+notMemberInSet visited lv = S.notMember lv visited
+
+bfsHelper ::(Ord s)  => [Node s a] -> [Node s a] -> [([Node s a], [Node s a])] -> S.Set s -> [([Node s a], [Node s a])]
+bfsHelper recentlyAdded frontier last_result visited =  if (length frontier) == 0 then last_result
+                                                        else bfsHelper new_recentlyAdded new_frontier new_last_result new_visited
+                                                        where
+                                                        new_last_result = last_result ++ [(recentlyAdded, frontier)]
+                                                        node = head frontier
+                                                        children = getChildren node
+                                                        valid_children = filter ((notMemberInSet visited) . getState) children
+                                                        visited_valid_children = S.fromList (map getState valid_children)
+                                                        new_recentlyAdded = valid_children
+                                                        new_frontier = (tail frontier) ++ new_recentlyAdded
+                                                        new_visited = S.union visited visited_valid_children
+                                                        
+                                                        
+
 bfs :: Ord s => Node s a -> [([Node s a], [Node s a])]
-bfs = undefined
+bfs startNode = bfsHelper [startNode] [startNode] [] S.empty 
 
-
+startNode = createStateSpace lv4
 
 {-
     *** TODO ***
