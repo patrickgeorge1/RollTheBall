@@ -55,23 +55,6 @@ nodeChildren node = getChildren node
     având drept copii nodurile succesorilor stării curente.
 -}
 
--- levelToString :: s -> String
--- levelToString node = map category $ A.elems (cells (getState node))
-
--- createNode :: (ProblemState s a, Eq s) => Node s a -> s ->Node s a
--- createNode node@(Node state action parent depth c)   = new_node
---                     where
---                     pos_dir_levels = ProblemState.successors state
---                     childrens = [(Node lev (Just pd) (Just new_node) (depth + 1) [])  | (pd, lev) <- pos_dir_levels]
---                     new_node = Node state action parent depth childrens
-
-
--- createNode :: (ProblemState s a, Eq s)  => Node s a -> a -> s ->Node s a
--- createNode parinte@(Node state actionn parent depth c) action lv  = Node lv (Just action) parent 0 childrenRec
---                                                         where 
---                                                         succs_pos_dir_levels = ProblemState.successors state
---                                                         childrenRec = [(createNode (createNode parinte action lv) pd lev) | (pd, lev) <- succs_pos_dir_levels]
-
 
 createNode ::  (ProblemState s a, Eq s)  => Node s a -> s ->Node s a
 createNode parinte@(Node state actionn parent depth c) lv = Node lv Nothing (Just parinte) 0 childRec
@@ -84,9 +67,7 @@ createStateSpace :: (ProblemState s a, Eq s)  => s -> Node s a
 createStateSpace lv =   createNode startNode  lv
                         where
                         startNode = Node lv Nothing Nothing 0 []
-                        -- dummyAc = ProblemState.getSameAction 
-                        -- dummyLv = ProblemState.getSameAction lv
-              
+
 
               
 
